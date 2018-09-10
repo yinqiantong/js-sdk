@@ -1,0 +1,36 @@
+{
+  "name": "js-sdk",
+  "version": "0.0.1",
+  "description": "yinqiantong sdk for js",
+  "main": "dist/yinqiantong.min.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack --node development",
+    "build": "webpack --node production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yinqiantong/js-sdk.git"
+  },
+  "keywords": [
+    "yinqiantong"
+  ],
+  "author": "YinQianTong",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yinqiantong/js-sdk/issues"
+  },
+  "contributors": [
+    {
+      "name": "huzhenjie",
+      "email": "huzhenjie.dev@gmail.com"
+    }
+  ],
+  "homepage": "https://github.com/yinqiantong/js-sdk#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.2",
+    "babel-preset-es2015": "^6.24.1",
+    "webpack": "^4.17.2"
+  }
+}

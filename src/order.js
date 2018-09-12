@@ -81,7 +81,7 @@ export default {
         } else if (channel === 'wx') {
             switch (platform) {
                 case 'h5':
-                    alert('微信h5');
+                    location.href = pay_body;
                     return;
                 case 'mp':
                     payConfig = JSON.parse(pay_body);

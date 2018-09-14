@@ -1,5 +1,5 @@
-import order from './order';
+import core from './core';
 
 export {
-    order
+    core
 };

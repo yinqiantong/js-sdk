@@ -9,24 +9,12 @@ import {
 } from "./utils";
 
 const $ = require('jquery');
-let YQT_WX_PAY_CONFIG;
 
 const showAlipayH5 = formBody => {
     const element = document.createElement('div');
     element.innerHTML = formBody;
     document.body.appendChild(element);
     document.forms['alipaysubmit'].submit()
-};
-
-const onBridgeReady = () => {
-    WeixinJSBridge.invoke(
-        'getBrandWCPayRequest', YQT_WX_PAY_CONFIG,
-        res => {
-            console.log(res);
-            if (res.err_msg === "get_brand_wcpay_request:ok") {
-            } else {
-            }
-        });
 };
 
 const createPayOrder = (url, type, data, channel, platform, code, error) => {
@@ -47,6 +35,30 @@ const createPayOrder = (url, type, data, channel, platform, code, error) => {
             return error && error(res.msg)
         }
     });
+};
+
+const getOrder = (url, outTradeNo, type, success, error) => {
+    if (!type) {
+        type = 'POST'
+    }
+    $.ajax({
+        url,
+        type,
+        data: {out_trade_no: outTradeNo},
+        success: res => {
+            if (res.code !== 200) {
+                return error && error(res.msg)
+            }
+            success(res.data)
+        },
+        error: () => {
+            return error && error(res.msg)
+        }
+    })
+};
+
+const isPaySuccess = (order) => {
+    return order && order.status && order.status === 'pay_success'
 };
 
 const multipleQrCode = options => {
@@ -80,7 +92,18 @@ const multipleQrCode = options => {
 };
 
 const pay = options => {
-    const {channel, /*out_trade_no,*/ platform, pay_body} = options;
+    const {channel, out_trade_no, platform, pay_body} = options;
+
+    function onBridgeReady() {
+        WeixinJSBridge.invoke(
+            'getBrandWCPayRequest', JSON.parse(pay_body),
+            function (res) {
+                if (res.err_msg === "get_brand_wcpay_request:ok") {
+                } else {
+                }
+            });
+    }
+
     if (channel === "alipay") {
         switch (platform) {
             case 'h5':
@@ -94,7 +117,6 @@ const pay = options => {
                 location.href = pay_body;
                 return;
             case 'mp':
-                YQT_WX_PAY_CONFIG = JSON.parse(pay_body);
                 if (typeof WeixinJSBridge === "undefined") {
                     if (document.addEventListener) {
                         document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false)
@@ -132,16 +154,19 @@ const wxpayMp = options => {
     createPayOrder(url, type, data, 'wx', 'mp', code, error)
 };
 
-const test = options => {
-    alert(options)
+const test = () => {
+    alert('欢迎使用银钱通');
+    console.log('欢迎使用银钱通')
 };
 
 export {
     test,
     pay,
+    isPaySuccess,
+
     multipleQrCode,
     alipayH5,
     alipayPc,
     wxpayH5,
-    wxpayMp
+    wxpayMp,
 }

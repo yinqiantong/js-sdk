@@ -91,7 +91,7 @@ const multipleQrCode = options => {
     }
 };
 
-const pay = options => {
+const pay = (options) => {
     const {channel, out_trade_no, platform, pay_body} = options;
 
     function onBridgeReady() {
@@ -109,13 +109,13 @@ const pay = options => {
             case 'h5':
             case 'pc':
                 showAlipayH5(pay_body);
-                return
+                return true;
         }
     } else if (channel === 'wx') {
         switch (platform) {
             case 'h5':
                 location.href = pay_body;
-                return;
+                return true;
             case 'mp':
                 if (typeof WeixinJSBridge === "undefined") {
                     if (document.addEventListener) {
@@ -127,11 +127,12 @@ const pay = options => {
                 } else {
                     onBridgeReady()
                 }
-                return
+                return true;
         }
     }
 
     console.error(`Unsupported ${channel} ${platform} ${pay_body}`);
+    return false;
 };
 
 const alipayH5 = options => {
@@ -159,10 +160,130 @@ const test = () => {
     console.log('欢迎使用银钱通')
 };
 
+const getCreateOrderRequestInfo = (info, channel, platform) => {
+    let urlCode = getUrlParam('code');
+    const data = {channel, platform, code: urlCode, extra: ''};
+    if (typeof info === 'string') {
+        return {
+            data,
+            url: info,
+            type: 'POST'
+        }
+    }
+
+    data.extra = info.extra || '';
+    data.code = info.code || urlCode;
+    return {
+        data,
+        url: info.url,
+        type: info.type || 'POST'
+    }
+};
+
+const getQueryOrderRequestInfo = (info, outTradeNo) => {
+    const data = {out_trade_no: outTradeNo};
+    if (typeof info === 'string') {
+        return {
+            data,
+            url: info,
+            type: 'POST'
+        }
+    }
+    return {
+        data,
+        url: info.url,
+        type: info.type || 'POST'
+    }
+};
+
+const autoPay = (create_order, query_order, options, channel, platform) => {
+    const create = getCreateOrderRequestInfo(create_order, channel, platform);
+
+    const onError = options ? options.onError : null;
+    const onPaying = options ? options.onPaying : null;
+    const onSuccess = options ? options.onSuccess : null;
+    const onFinish = options ? options.onFinish : null;
+
+    let outTradeNo;
+    let t;
+
+    function queryOrder() {
+        const query = getQueryOrderRequestInfo(query_order, outTradeNo);
+        $.ajax({
+            url: query.url,
+            type: query.type,
+            data: query.data,
+            success: res => {
+                clearTimeout(t);
+                if (res && res.status && res.status !== 'unpaid') {
+                    onSuccess && onSuccess(res);
+                    return onFinish && onFinish()
+                }
+                t = setTimeout(function () {
+                    queryOrder()
+                }, 1000)
+            },
+            error: () => {
+                clearTimeout(t);
+                t = setTimeout(function () {
+                    queryOrder()
+                }, 1000)
+            }
+        })
+    }
+
+    $.ajax({
+        url: create.url,
+        type: create.type,
+        data: create.data,
+        success: res => {
+            console.log(res);
+            if (res && res.out_trade_no) {
+                outTradeNo = res.out_trade_no;
+                onPaying && onPaying(res);
+
+                const executeSuccess = pay(res);
+
+                if (executeSuccess) {
+                    t = setTimeout(function () {
+                        queryOrder()
+                    }, 1000)
+                }
+            }
+            return onError && onError('创建订单失败')
+        },
+        error: () => {
+            onError && onError('创建订单失败');
+            return onFinish && onFinish()
+        }
+    })
+};
+
+const wxpay_mp = (create_order, query_order, options) => {
+    autoPay(create_order, query_order, options, 'wx', 'mp');
+};
+
+const wxpay_h5 = (create_order, query_order, options) => {
+    autoPay(create_order, query_order, options, 'wx', 'h5');
+};
+
+const alipay_h5 = (create_order, query_order, options) => {
+    autoPay(create_order, query_order, options, 'alipay', 'h5');
+};
+
+const alipay_pc = (create_order, query_order, options) => {
+    autoPay(create_order, query_order, options, 'alipay', 'pc');
+};
+
 export {
     test,
     pay,
     isPaySuccess,
+
+    wxpay_h5,
+    wxpay_mp,
+    alipay_h5,
+    alipay_pc,
 
     multipleQrCode,
     alipayH5,

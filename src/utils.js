@@ -15,7 +15,7 @@ export function isAlipay() {
 
 export function isAndroid() {
     const userAgent = window.navigator.userAgent.toLocaleLowerCase();
-    return userAgent.indexOf('android') > -1 || userAgent.indexOf('adr') > -1
+    return userAgent.indexOf('android') > -1 || userAgent.indexOf('adr') > -1 || userAgent.indexOf('miui') > -1
 }
 
 export function isIos() {

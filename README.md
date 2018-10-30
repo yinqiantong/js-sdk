@@ -13,7 +13,7 @@
 > 使用 npm 安装
 
 ```
-npm install yinqiantong-js-sdk@0.0.1
+npm install yinqiantong-js-sdk@0.0.2
 ```
 
 > 通过源码编译

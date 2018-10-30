@@ -29,7 +29,7 @@ const createPayOrder = (url, type, data, channel, platform, code, error) => {
             if (res.code !== 200) {
                 return error && error(res.msg)
             }
-            pay(res.data)
+            pay(channel, platform, res.data.pay_body);
         },
         error: () => {
             return error && error(res.msg)
@@ -68,7 +68,7 @@ const multipleQrCode = options => {
     }
 
     if (isAlipay()) {
-        return createPayOrder(url, type, data, "alipay", 'h5', 0, error)
+        return createPayOrder(url, type, data, 1, 3, 0, error)
     }
 
     if (isWechat()) {
@@ -80,7 +80,7 @@ const multipleQrCode = options => {
             location.href = createWxAuthRedirectUrl(wxAppId, currHref);
             return
         }
-        return createPayOrder(url, type, data, 'wx', 'mp', code, error)
+        return createPayOrder(url, type, data, 2, 4, code, error)
     }
 
     if (isAndroid() || isIos()) {
@@ -91,8 +91,7 @@ const multipleQrCode = options => {
     }
 };
 
-const pay = (options) => {
-    const {channel, out_trade_no, platform, pay_body} = options;
+const pay = (channel, platform, pay_body) => {
 
     function onBridgeReady() {
         WeixinJSBridge.invoke(
@@ -104,19 +103,19 @@ const pay = (options) => {
             });
     }
 
-    if (channel === "alipay") {
+    if (channel === 1) {
         switch (platform) {
-            case 'h5':
-            case 'pc':
+            case 3:
+            case 1:
                 showAlipayH5(pay_body);
                 return true;
         }
-    } else if (channel === 'wx') {
+    } else if (channel === 2) {
         switch (platform) {
-            case 'h5':
+            case 3:
                 location.href = pay_body;
                 return true;
-            case 'mp':
+            case 4:
                 if (typeof WeixinJSBridge === "undefined") {
                     if (document.addEventListener) {
                         document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false)
@@ -137,22 +136,22 @@ const pay = (options) => {
 
 const alipayH5 = options => {
     const {url, type, data, error} = options;
-    createPayOrder(url, type, data, "alipay", 'h5', 0, error)
+    createPayOrder(url, type, data, 1, 3, 0, error)
 };
 
 const alipayPc = options => {
     const {url, type, data, error} = options;
-    createPayOrder(url, type, data, "alipay", 'pc', 0, error)
+    createPayOrder(url, type, data, 1, 1, 0, error)
 };
 
 const wxpayH5 = options => {
     const {url, type, data, error} = options;
-    createPayOrder(url, type, data, 'wx', 'h5', 0, error)
+    createPayOrder(url, type, data, 2, 3, 0, error)
 };
 
 const wxpayMp = options => {
     const {url, type, data, code, error} = options;
-    createPayOrder(url, type, data, 'wx', 'mp', code, error)
+    createPayOrder(url, type, data, 2, 4, code, error)
 };
 
 const test = () => {
@@ -215,8 +214,8 @@ const autoPay = (create_order, query_order, options, channel, platform) => {
             data: query.data,
             success: res => {
                 clearTimeout(t);
-                if (res && res.status && res.status !== 'unpaid') {
-                    onSuccess && onSuccess(res);
+                if (res.code === 200 && res.data && res.data.status === 1) {
+                    onSuccess && onSuccess(outTradeNo, res);
                     return onFinish && onFinish()
                 }
                 t = setTimeout(function () {
@@ -237,12 +236,11 @@ const autoPay = (create_order, query_order, options, channel, platform) => {
         type: create.type,
         data: create.data,
         success: res => {
-            console.log(res);
-            if (res && res.out_trade_no) {
-                outTradeNo = res.out_trade_no;
+            if (res && res.code === 200 && res.data && res.data.out_trade_no) {
+                outTradeNo = res.data.out_trade_no;
                 onPaying && onPaying(res);
 
-                const executeSuccess = pay(res);
+                const executeSuccess = pay(channel, platform, res.data.pay_body);
 
                 if (executeSuccess) {
                     t = setTimeout(function () {
@@ -260,19 +258,19 @@ const autoPay = (create_order, query_order, options, channel, platform) => {
 };
 
 const wxpay_mp = (create_order, query_order, options) => {
-    autoPay(create_order, query_order, options, 'wx', 'mp');
+    autoPay(create_order, query_order, options, 2, 4);
 };
 
 const wxpay_h5 = (create_order, query_order, options) => {
-    autoPay(create_order, query_order, options, 'wx', 'h5');
+    autoPay(create_order, query_order, options, 2, 3);
 };
 
 const alipay_h5 = (create_order, query_order, options) => {
-    autoPay(create_order, query_order, options, 'alipay', 'h5');
+    autoPay(create_order, query_order, options, 1, 3);
 };
 
 const alipay_pc = (create_order, query_order, options) => {
-    autoPay(create_order, query_order, options, 'alipay', 'pc');
+    autoPay(create_order, query_order, options, 1, 1);
 };
 
 export {

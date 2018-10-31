@@ -2,3 +2,5 @@
 .DS_Store
 node_modules
 internal_test
+upload_to_cdn.py
+.qiniu_pythonsdk_hostscache.json

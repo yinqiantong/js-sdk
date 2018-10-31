@@ -7,7 +7,7 @@
 > 直接使用静态文件地址
 
 ```
-
+<script src="https://c.yqtapi.com/lib/js/e9a5ccc8f11ae9427adeecc9696e6798/yinqiantong.min.js"></script>
 ```
 
 > 使用 npm 安装

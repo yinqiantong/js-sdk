@@ -214,7 +214,7 @@ const autoPay = (create_order, query_order, options, channel, platform) => {
             data: query.data,
             success: res => {
                 clearTimeout(t);
-                if (res.code === 200 && res.data && res.data.status === 1) {
+                if (res.code === 200) {
                     onSuccess && onSuccess(outTradeNo, res);
                     return onFinish && onFinish()
                 }
